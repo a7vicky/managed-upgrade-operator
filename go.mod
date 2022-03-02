@@ -29,8 +29,8 @@ require (
 	github.com/sykesm/zap-logfmt v0.0.4
 	go.uber.org/zap v1.19.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.22.1
-	k8s.io/apimachinery v0.22.1
+	k8s.io/api v0.23.4
+	k8s.io/apimachinery v0.23.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20210421082810-95288971da7e
 	sigs.k8s.io/controller-runtime v0.10.0

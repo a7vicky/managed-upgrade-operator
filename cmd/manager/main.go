@@ -201,23 +201,35 @@ func main() {
 	// work
 	stopCh := signals.SetupSignalHandler()
 
-	upgradeConfigManagerClient, err := client.New(cfg, client.Options{})
-	if err != nil {
-		log.Error(err, "unable to create configmanager client")
-		os.Exit(1)
-	}
+	retrycount := 0
+	for retrycount <= 100 {
+		if upgradeconfigmanager.EnsureConfigmapExist(muocfg.OperatorNamespace, muocfg.ConfigMapName) {
+			upgradeConfigManagerClient, err := client.New(cfg, client.Options{})
+			if err != nil {
+				log.Error(err, "unable to create configmanager client")
+				os.Exit(1)
+			}
 
-	ucMgr, err := upgradeconfigmanager.NewBuilder().NewManager(upgradeConfigManagerClient)
-	if err != nil {
-		log.Error(err, "can't read config manager configuration")
-	}
-	log.Info("Starting UpgradeConfig manager")
-	go ucMgr.StartSync(stopCh)
+			ucMgr, err := upgradeconfigmanager.NewBuilder().NewManager(upgradeConfigManagerClient)
+			if err != nil {
+				log.Error(err, "can't read config manager configuration")
+			}
+			log.Info("Starting UpgradeConfig manager")
+			go ucMgr.StartSync(stopCh)
 
-	// Watch the Cmd
-	if err := mgr.Start(stopCh); err != nil {
-		log.Error(err, "Manager exited non-zero")
-		os.Exit(1)
+			// Watch the Cmd
+			if err := mgr.Start(stopCh); err != nil {
+				log.Error(err, "Manager exited non-zero")
+				os.Exit(1)
+			}
+		} else {
+			log.Info(fmt.Sprintf("Configmap %s does not exist in %s namespace. Retrying .... ", muocfg.ConfigMapName, muocfg.OperatorNamespace))
+			if retrycount == 100 {
+				log.Error(nil, fmt.Sprintf("Failed to start upgradeconfigmanager: Configmap /%s/ does not exist in /%s/ namespace.", muocfg.ConfigMapName, muocfg.OperatorNamespace))
+				os.Exit(1)
+			}
+			retrycount++
+		}
 	}
 }
 
